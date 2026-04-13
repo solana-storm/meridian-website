@@ -159,7 +159,16 @@ function App() {
       {/* ─── HERO ─── */}
       <section className="hero" id="hero">
         <div className="hero-bg">
-          <img src="/images/eclipse-bg.jpg" alt="" />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/images/eclipse-bg.jpg"
+            className="hero-bg-video"
+          >
+            <source src="/images/bg-video.mov" type="video/mp4" />
+          </video>
         </div>
         <div className="hero-content">
           <h1 className="hero-title">Meridian</h1>
@@ -381,30 +390,22 @@ function App() {
           </div>
           <div className="tech-tags fade-in">
             {[
-              'Rust',
               'Solana',
-              'EVM',
-              'QUIC Protocol',
-              'gRPC',
-              'Geyser',
-              'AMD EPYC',
-              'Bare Metal',
-              'Jito',
-              'Helius',
-              'Astralane',
-              'ZeroSlot',
-              'Nozomi',
-              'Raydium',
-              'Orca',
-              'Meteora',
-              'PumpSwap',
-              'Uniswap V4',
-              'Curve',
-              'NVMe Gen5',
-              'DDR5',
-              'Frankfurt DE',
-              'Low Latency',
-              'MEV',
+              'Ethereum',
+              'Base',
+              'Arbitrum',
+              'Optimism',
+              'Polygon',
+              'BSC',
+              'Avalanche',
+              'zkSync',
+              'Linea',
+              'Scroll',
+              'Blast',
+              'Mantle',
+              'Fantom',
+              'Gnosis',
+              'Celo',
             ].map((tag) => (
               <span className="tech-tag" key={tag}>
                 {tag}
