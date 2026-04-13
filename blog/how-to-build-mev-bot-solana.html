@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Build a MEV Bot on Solana: Complete Developer Guide (2026) | Meridian</title>
+<meta name="description" content="Step-by-step guide to building a production-grade MEV bot on Solana in Rust. Architecture design, Geyser gRPC data pipeline, strategy engine, Jito bundle submission, and deployment. From zero to profitable extraction.">
+<meta name="keywords" content="how to build MEV bot Solana, Solana MEV bot tutorial, MEV bot development guide, Rust MEV bot, Solana arbitrage bot tutorial, Geyser gRPC, Jito bundles tutorial, MEV bot architecture">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://meridian-mev.com/blog/how-to-build-mev-bot-solana">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to Build a MEV Bot on Solana: Complete Developer Guide">
+<meta property="og:description" content="Step-by-step technical walkthrough for building a production-grade MEV bot on Solana in Rust. Architecture, data pipeline, strategy engine, and execution layer.">
+<meta property="og:url" content="https://meridian-mev.com/blog/how-to-build-mev-bot-solana">
+<meta property="og:site_name" content="Meridian">
+<meta property="article:published_time" content="2026-04-10">
+<meta property="article:author" content="Meridian">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How to Build a MEV Bot on Solana: Complete Developer Guide">
+<meta name="twitter:description" content="From architecture to production — build a Solana MEV bot in Rust.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to Build a MEV Bot on Solana: Complete Developer Guide",
+  "description": "Step-by-step guide to building a production-grade MEV bot on Solana in Rust. Architecture, Geyser gRPC pipeline, strategy engine, Jito bundle submission, and deployment.",
+  "datePublished": "2026-04-10",
+  "dateModified": "2026-04-13",
+  "author": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "mainEntityOfPage": "https://meridian-mev.com/blog/how-to-build-mev-bot-solana",
+  "keywords": ["MEV bot", "Solana", "Rust", "arbitrage", "Jito", "Geyser gRPC"]
+}
+</script>
+
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">MERIDIAN</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/services/mev-bot-development">Services</a></li>
+    <li><a href="/blog/" class="active">Blog</a></li>
+    <li><a href="https://t.me/AV_0011" target="_blank">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/blog/">Blog</a><span class="sep">/</span>
+    How to Build a MEV Bot
+  </div>
+  <h1 class="page-title">How to Build a MEV Bot on Solana</h1>
+  <p class="page-subtitle">Complete developer guide — from architecture decisions to production deployment. Everything you need to go from zero to profitable extraction.</p>
+</header>
+
+<main class="content">
+  <div class="article-meta">
+    <span>April 10, 2026</span>
+    <span>12 min read</span>
+    <span>Developer Guide</span>
+  </div>
+
+  <p>Building a MEV bot on Solana is fundamentally different from Ethereum. There's no public mempool to monitor. Transactions are processed in parallel. Block times are 400ms, not 12 seconds. These differences demand a completely different architecture — and that's what this guide covers.</p>
+
+  <p>This is not a theoretical overview. Every component described here exists in production systems processing thousands of opportunities daily. We'll walk through the complete architecture, explain the trade-offs at each layer, and provide concrete implementation guidance in Rust.</p>
+
+  <h2>Prerequisites</h2>
+  <p>Before you start, you need:</p>
+  <ul>
+    <li><strong>Rust proficiency</strong> — You don't need to be an expert, but you should be comfortable with async Rust, Tokio, and the borrow checker. Python/TS bots exist but cannot compete on latency.</li>
+    <li><strong>Solana fundamentals</strong> — Accounts model, transactions, instructions, compute units, and priority fees. The <a href="https://solana.com/docs" target="_blank" style="color: rgba(255,200,150,0.7);">Solana docs</a> cover this well.</li>
+    <li><strong>RPC and Geyser access</strong> — You'll need a Geyser gRPC endpoint (Helius, Triton, or your own validator) and Jito block engine access.</li>
+    <li><strong>Infrastructure</strong> — A server in the same region as major Solana validators (typically US East or Amsterdam). Bare metal preferred over cloud for consistent latency.</li>
+  </ul>
+
+  <h2>Architecture Overview</h2>
+  <p>A production MEV bot has three distinct layers that operate as a pipeline:</p>
+  <ol>
+    <li><strong>Data Layer</strong> — Ingests real-time on-chain state changes</li>
+    <li><strong>Strategy Layer</strong> — Detects profitable opportunities from state changes</li>
+    <li><strong>Execution Layer</strong> — Constructs and submits transactions</li>
+  </ol>
+  <p>Each layer runs as independent async tasks connected by bounded channels. This separation lets you swap strategies without touching the data pipeline, add submitters without changing strategy logic, and scale each layer independently.</p>
+
+  <h2>Step 1: The Data Pipeline</h2>
+  <p>On Solana, the primary data source for MEV bots is <strong>Geyser gRPC</strong> (also known as Yellowstone). Unlike RPC polling, Geyser pushes account updates to your bot as they happen — often before the transaction is confirmed in a block.</p>
+
+  <h3>Setting Up Geyser gRPC</h3>
+  <p>The Yellowstone gRPC plugin streams account updates, transaction notifications, and slot updates. For MEV, you primarily care about account updates on DEX pool accounts.</p>
+
+  <pre><code>// Subscribe to all Raydium AMM pool accounts
+let subscribe_request = SubscribeRequest {
+    accounts: HashMap::from([(
+        "raydium_pools".to_string(),
+        SubscribeRequestFilterAccounts {
+            owner: vec![RAYDIUM_AMM_PROGRAM_ID.to_string()],
+            account: vec![],
+            ..Default::default()
+        },
+    )]),
+    ..Default::default()
+};</code></pre>
+
+  <p>The critical optimization: <strong>subscribe by program owner, not individual accounts</strong>. This gives you updates for every pool under that program, including newly created ones, without maintaining a manual account list.</p>
+
+  <h3>Account Decoding</h3>
+  <p>Raw account data arrives as byte arrays. You need to decode them into typed structures for each DEX:</p>
+  <ul>
+    <li><strong>Raydium AMM V4</strong> — 752-byte account layout with token reserves at known offsets</li>
+    <li><strong>Raydium CLMM</strong> — Concentrated liquidity with tick arrays that need separate account loads</li>
+    <li><strong>Orca Whirlpools</strong> — Similar CLMM structure with different tick spacing conventions</li>
+    <li><strong>Meteora DLMM</strong> — Bin-based liquidity with active bin tracking</li>
+  </ul>
+  <p>Use zero-copy deserialization wherever possible. Anchor's <code>AccountDeserialize</code> works but copies data. For hot-path decoding, read fields directly from byte offsets:</p>
+
+  <pre><code>fn decode_raydium_amm_reserves(data: &[u8]) -> (u64, u64) {
+    let token_a = u64::from_le_bytes(
+        data[RESERVE_A_OFFSET..RESERVE_A_OFFSET + 8]
+            .try_into().unwrap()
+    );
+    let token_b = u64::from_le_bytes(
+        data[RESERVE_B_OFFSET..RESERVE_B_OFFSET + 8]
+            .try_into().unwrap()
+    );
+    (token_a, token_b)
+}</code></pre>
+
+  <h3>State Management</h3>
+  <p>Your bot needs an in-memory representation of all monitored pool states. Use a <code>DashMap&lt;Pubkey, PoolState&gt;</code> or similar concurrent map that allows lock-free reads. When a Geyser update arrives, decode the new state and update the map. The strategy layer reads from this map without blocking the data pipeline.</p>
+
+  <h2>Step 2: Strategy Engine</h2>
+  <p>The strategy engine watches for state changes and identifies profitable opportunities. The most common MEV strategies on Solana:</p>
+
+  <h3>Cross-DEX Arbitrage</h3>
+  <p>The bread and butter of Solana MEV. When the same token pair has different prices on two DEXes, buy on the cheaper one and sell on the expensive one. The key challenge is speed — these gaps close in milliseconds.</p>
+  <p>Implementation approach:</p>
+  <ol>
+    <li>Build a token graph where edges are DEX pools</li>
+    <li>On every pool state update, recalculate quotes for connected edges</li>
+    <li>Run negative cycle detection (modified Bellman-Ford) to find profitable paths</li>
+    <li>For each profitable cycle, calculate optimal input amount using binary search</li>
+  </ol>
+
+  <h3>Liquidations</h3>
+  <p>Monitor lending protocols (Marginfi, Kamino, Solend) for accounts approaching liquidation thresholds. When oracle prices push a position below the health factor threshold, submit a liquidation transaction. Profit comes from the liquidation bonus — typically 5-10% of the position value.</p>
+
+  <h3>Backrunning</h3>
+  <p>Watch for large swaps that move pool prices significantly, then immediately arbitrage the resulting price discrepancy across DEXes. On Solana, this requires Jito bundles to guarantee your transaction lands immediately after the target.</p>
+
+  <h3>Opportunity Scoring</h3>
+  <p>Not every detected opportunity is worth executing. Your strategy engine should score each opportunity by:</p>
+  <ul>
+    <li><strong>Expected profit</strong> — after all fees, tips, and slippage</li>
+    <li><strong>Competition density</strong> — how many other bots are likely targeting this</li>
+    <li><strong>Execution complexity</strong> — number of instructions, CU requirement</li>
+    <li><strong>Historical landing rate</strong> — for similar opportunities</li>
+  </ul>
+
+  <h2>Step 3: Transaction Construction</h2>
+  <p>Once a profitable opportunity is identified, you need to build a transaction that captures it. This is where Solana-specific nuances matter most.</p>
+
+  <h3>Compute Unit Optimization</h3>
+  <p>Every transaction needs a compute unit budget. Too low and it fails. Too high and you waste priority fee spend. The optimal approach:</p>
+  <ol>
+    <li>Simulate the transaction first (via <code>simulateTransaction</code> or local execution)</li>
+    <li>Take the simulated CU consumption</li>
+    <li>Add a 10-15% buffer</li>
+    <li>Set <code>SetComputeUnitLimit</code> to this value</li>
+  </ol>
+
+  <h3>Priority Fee Calculation</h3>
+  <p>Priority fees (via <code>SetComputeUnitPrice</code>) determine your transaction's position in the scheduler queue. Calculate the fee based on:</p>
+  <ul>
+    <li>Recent priority fee distribution for your target accounts (Helius priority fee API)</li>
+    <li>Expected profit — never pay more in fees than you'll make</li>
+    <li>Competition level — hot opportunities need higher fees</li>
+  </ul>
+
+  <h3>Atomic Execution with On-Chain Programs</h3>
+  <p>For complex strategies (multi-hop arb, flash loan arb), wrap your logic in a custom Solana program that executes atomically. The program pattern:</p>
+
+  <pre><code>// Pseudo-code for atomic arbitrage program
+pub fn execute_arb(ctx: Context&lt;ArbAccounts&gt;, min_profit: u64) -> Result&lt;()&gt; {
+    // Step 1: Record starting balance
+    let balance_before = ctx.accounts.token_account.amount;
+
+    // Step 2: Execute swap A (CPI into DEX A)
+    swap_on_dex_a(ctx, amount_in)?;
+
+    // Step 3: Execute swap B (CPI into DEX B)
+    swap_on_dex_b(ctx, intermediate_amount)?;
+
+    // Step 4: Verify profit
+    let balance_after = ctx.accounts.token_account.amount;
+    require!(
+        balance_after >= balance_before + min_profit,
+        ArbError::InsufficientProfit
+    );
+
+    Ok(())
+}</code></pre>
+
+  <p>The <code>require!</code> at the end is crucial — if the arb isn't profitable after execution (maybe prices moved during the slot), the entire transaction reverts. You only pay the base transaction fee, never losing capital.</p>
+
+  <h2>Step 4: Submission and Landing</h2>
+  <p>Transaction submission on Solana requires multicasting through multiple channels to maximize landing probability.</p>
+
+  <h3>Jito Bundles</h3>
+  <p>For most MEV strategies, Jito is the primary submission channel. Bundle your transaction with a tip transaction and submit to the block engine. The tip determines your priority among other bundle submitters. See our <a href="/blog/jito-bundles-guide" style="color: rgba(255,200,150,0.7);">complete Jito bundles guide</a> for detailed implementation.</p>
+
+  <h3>Multicast Strategy</h3>
+  <p>Don't rely on a single submitter. Fire through every available channel simultaneously:</p>
+  <ul>
+    <li>Jito block engine (with bundle)</li>
+    <li>Helius staked connections</li>
+    <li>bloXroute BDN</li>
+    <li>Direct QUIC to leader TPU</li>
+    <li>Any additional providers (Astralane, ZeroSlot, Nozomi)</li>
+  </ul>
+  <p>Different submitters have different characteristics — Jito guarantees ordering, QUIC is fastest but unordered, bloXroute has wide propagation. Using all of them gives the best probability of landing.</p>
+
+  <h2>Step 5: Monitoring and Optimization</h2>
+  <p>A deployed bot is not a finished bot. Continuous monitoring and optimization separate profitable operations from unprofitable ones.</p>
+
+  <h3>Key Metrics to Track</h3>
+  <ul>
+    <li><strong>Opportunity detection rate</strong> — How many profitable signals per minute/hour</li>
+    <li><strong>Execution rate</strong> — What percentage of detected opportunities lead to submitted transactions</li>
+    <li><strong>Landing rate</strong> — What percentage of submitted transactions land on-chain</li>
+    <li><strong>Profit per landed transaction</strong> — After all fees and tips</li>
+    <li><strong>Latency percentiles</strong> — p50, p95, p99 for each pipeline stage</li>
+  </ul>
+
+  <h3>Infrastructure</h3>
+  <p>Use <strong>InfluxDB</strong> for time-series metrics and <strong>Grafana</strong> for dashboards. Set up alerts for:</p>
+  <ul>
+    <li>Landing rate drops below threshold (might indicate network changes or new competition)</li>
+    <li>Latency spikes (infrastructure issues)</li>
+    <li>PnL going negative (strategy needs adjustment)</li>
+    <li>Submitter failures (API issues with a provider)</li>
+  </ul>
+
+  <h2>Step 6: Deployment</h2>
+  <p>Production deployment considerations:</p>
+  <ul>
+    <li><strong>Server location</strong> — Co-locate with major validators. US East (Virginia/New York) and Amsterdam are the primary hubs. Bare metal over cloud for consistent latency.</li>
+    <li><strong>Process management</strong> — Use systemd with automatic restart. The bot should recover from crashes within seconds.</li>
+    <li><strong>Configuration</strong> — All strategy parameters (min profit, max tip, CU buffers) should be hot-configurable without restart. Use a TOML/YAML config file watched for changes.</li>
+    <li><strong>Logging</strong> — Structured JSON logs with correlation IDs per opportunity. Essential for post-mortem analysis.</li>
+    <li><strong>Key management</strong> — Never hardcode private keys. Use environment variables or a secrets manager. Consider hardware wallets for high-value operations.</li>
+  </ul>
+
+  <h2>Common Mistakes</h2>
+  <p>After building and deploying dozens of MEV systems, these are the mistakes we see most often:</p>
+  <ol>
+    <li><strong>Using TypeScript or Python</strong> — The language overhead alone costs 10-50ms. In MEV, that's an eternity. Use Rust.</li>
+    <li><strong>Polling RPC instead of streaming</strong> — <code>getAccountInfo</code> polling adds 50-200ms of latency versus Geyser push updates.</li>
+    <li><strong>Single submitter</strong> — Using only Jito or only QUIC. Multicast through everything available.</li>
+    <li><strong>No simulation</strong> — Submitting transactions without simulating first wastes tips and fees on transactions that will fail.</li>
+    <li><strong>Static tip amounts</strong> — Tips should be dynamic, based on expected profit and recent landing rates.</li>
+    <li><strong>No circuit breakers</strong> — A bug in your strategy can drain your wallet in minutes without automated kill switches.</li>
+  </ol>
+
+  <h2>Next Steps</h2>
+  <p>This guide gives you the complete architecture. For deeper dives into specific components:</p>
+  <ul>
+    <li><a href="/blog/jito-bundles-guide" style="color: rgba(255,200,150,0.7);">Jito Bundles: Complete Technical Guide</a> — detailed bundle submission and tip optimization</li>
+    <li><a href="/blog/flash-loan-arbitrage-solana" style="color: rgba(255,200,150,0.7);">Flash Loan Arbitrage on Solana</a> — zero-capital MEV with Marginfi</li>
+    <li><a href="/blog/solana-mev-landscape-2026" style="color: rgba(255,200,150,0.7);">Solana MEV Landscape in 2026</a> — current state of competition and opportunity</li>
+  </ul>
+  <p>If you'd rather have us build it — that's what <a href="/services/mev-bot-development" style="color: rgba(255,200,150,0.7);">we do</a>.</p>
+
+  <div class="cta-section">
+    <h3>Need Help Building?</h3>
+    <p>We build production MEV bots from architecture to deployment. Share your strategy idea and we'll assess feasibility.</p>
+    <a href="https://t.me/AV_0011" class="cta-btn" target="_blank">Talk to Us</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/services/mev-bot-development">Services</a>
+    <a href="https://github.com/solana-storm" target="_blank">GitHub</a>
+    <a href="https://t.me/AV_0011" target="_blank">Telegram</a>
+  </div>
+  <div class="footer-copy">© 2026 MERIDIAN — All rights reserved</div>
+</footer>
+
+</body>
+</html>

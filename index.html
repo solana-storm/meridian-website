@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian | MEV Bot Development & High-Frequency Trading Infrastructure on Solana</title>
+<meta name="description" content="Custom MEV bot development on Solana. Atomic arbitrage, flash loan strategies, Jito bundle integration, 7 TX submitters, sub-15ms execution. Enterprise-grade HFT infrastructure.">
+<meta name="keywords" content="MEV bot, Solana MEV, arbitrage bot, Jito bundles, MEV development, HFT Solana, flash loan arbitrage, block engine, Solana trading bot, MEV infrastructure">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://meridian-mev.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Meridian — MEV Infrastructure & Bot Development on Solana">
+<meta property="og:description" content="Custom MEV bots, atomic arbitrage, flash loans. 80K+ lines of Rust. 7 TX submitters. Sub-15ms execution latency.">
+<meta property="og:url" content="https://meridian-mev.com/">
+<meta property="og:site_name" content="Meridian">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Meridian — MEV Infrastructure on Solana">
+<meta name="twitter:description" content="Custom MEV bots, atomic arbitrage, flash loans. Enterprise-grade HFT infrastructure.">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Meridian",
+  "url": "https://meridian-mev.com",
+  "description": "MEV infrastructure and high-frequency trading bot development on Solana",
+  "sameAs": [
+    "https://github.com/solana-storm",
+    "https://t.me/AV_0011"
+  ],
+  "knowsAbout": ["MEV", "Solana", "Arbitrage", "High-Frequency Trading", "Flash Loans", "Jito", "Block Engine"]
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ═══ STARS CANVAS ═══ */
+#stars-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+/* ═══ HERO SECTION ═══ */
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Moon eclipse */
+.moon-container {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin-bottom: 40px;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.moon {
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #1a1a2e 0%, #0a0a0f 50%, #050508 100%);
+  position: relative;
+  box-shadow:
+    0 0 80px 30px rgba(255, 255, 255, 0.12),
+    0 0 160px 80px rgba(200, 200, 255, 0.06),
+    0 0 240px 120px rgba(150, 150, 255, 0.03);
+}
+
+/* Corona glow */
+.moon::before {
+  content: '';
+  position: absolute;
+  top: -30px; left: -30px;
+  width: 380px; height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 40%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 60%, transparent 70%);
+  animation: pulse-corona 4s ease-in-out infinite;
+}
+
+@keyframes pulse-corona {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Light rays */
+.moon::after {
+  content: '';
+  position: absolute;
+  top: -80px; left: -80px;
+  width: 480px; height: 480px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg, rgba(255,255,255,0.03) 10deg, transparent 20deg,
+    transparent 40deg, rgba(255,255,255,0.05) 50deg, transparent 60deg,
+    transparent 90deg, rgba(255,255,255,0.02) 100deg, transparent 110deg,
+    transparent 150deg, rgba(255,255,255,0.04) 160deg, transparent 170deg,
+    transparent 200deg, rgba(255,255,255,0.03) 210deg, transparent 220deg,
+    transparent 270deg, rgba(255,255,255,0.05) 280deg, transparent 290deg,
+    transparent 320deg, rgba(255,255,255,0.02) 330deg, transparent 340deg
+  );
+  animation: rotate-rays 30s linear infinite;
+}
+
+@keyframes rotate-rays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Moon craters */
+.crater {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0d0d15 0%, #0a0a10 100%);
+}
+.crater-1 { width: 40px; height: 40px; top: 60px; left: 80px; opacity: 0.3; }
+.crater-2 { width: 25px; height: 25px; top: 140px; left: 200px; opacity: 0.2; }
+.crater-3 { width: 55px; height: 55px; top: 180px; left: 100px; opacity: 0.25; }
+.crater-4 { width: 18px; height: 18px; top: 90px; left: 180px; opacity: 0.15; }
+.crater-5 { width: 30px; height: 30px; top: 220px; left: 180px; opacity: 0.2; }
+
+/* Title */
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
+  letter-spacing: 20px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 0%, #888899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: fade-in 2s ease-out 0.5s both;
+}
+
+.subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 8px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 12px;
+  text-transform: uppercase;
+  animation: fade-in 2s ease-out 1s both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: fade-in 2s ease-out 2s both;
+}
+
+.scroll-indicator span {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.2);
+  text-transform: uppercase;
+}
+
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scroll-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ═══ SECTIONS ═══ */
+section {
+  position: relative;
+  z-index: 1;
+  padding: 120px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 6px;
+  margin-bottom: 60px;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out;
+}
+
+.section-title.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Divider */
+.divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(to right, rgba(255,255,255,0.5), transparent);
+  margin-bottom: 60px;
+  opacity: 0;
+  transition: all 0.8s ease-out 0.2s;
+}
+.divider.visible { opacity: 1; }
+
+/* ═══ WHAT WE DO ═══ */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 40px;
+}
+
+.service-card {
+  padding: 40px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.service-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-card:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  transform: translateY(-5px);
+}
+
+.service-icon {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.service-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.service-card p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.5);
+  font-weight: 300;
+}
+
+/* ═══ METRICS ═══ */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  text-align: center;
+}
+
+.metric {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-out;
+}
+
+.metric.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.metric-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff, #667);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* ═══ TECH STACK ═══ */
+.tech-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.tech-tag {
+  padding: 10px 24px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.tech-tag.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tech-tag:hover {
+  border-color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8);
+}
+
+/* ═══ CONTACT ═══ */
+.contact-links {
+  display: flex;
+  gap: 30px;
+}
+
+.contact-link {
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
+  padding-bottom: 4px;
+  border-bottom: 1px solid transparent;
+}
+
+.contact-link:hover {
+  color: #fff;
+  border-bottom-color: rgba(255,255,255,0.3);
+}
+
+/* ═══ FOOTER ═══ */
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 60px;
+  color: rgba(255,255,255,0.15);
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+  .title { font-size: 2rem; letter-spacing: 10px; }
+  .subtitle { font-size: 0.8rem; letter-spacing: 4px; }
+  .moon-container { width: 220px; height: 220px; }
+  .moon { width: 220px; height: 220px; }
+  .moon::before { width: 280px; height: 280px; top: -30px; left: -30px; }
+  .moon::after { width: 340px; height: 340px; top: -60px; left: -60px; }
+  section { padding: 80px 24px; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .contact-links { flex-direction: column; gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="moon-container">
+    <div class="moon">
+      <div class="crater crater-1"></div>
+      <div class="crater crater-2"></div>
+      <div class="crater crater-3"></div>
+      <div class="crater crater-4"></div>
+      <div class="crater crater-5"></div>
+    </div>
+  </div>
+  <h1 class="title">MERIDIAN</h1>
+  <p class="subtitle">MEV Infrastructure</p>
+  <div class="scroll-indicator">
+    <span>Explore</span>
+    <div class="scroll-line"></div>
+  </div>
+</div>
+
+<!-- WHAT WE DO -->
+<section>
+  <h2 class="section-title">What We Build</h2>
+  <div class="divider"></div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon">⚡</div>
+      <h3>MEV Extraction</h3>
+      <p>High-frequency arbitrage and liquidation bots on Solana. Sub-15ms detection-to-execution pipeline with multicast transaction delivery.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🌐</div>
+      <h3>Block Engine Integration</h3>
+      <p>Deep integration with Jito, Helius, Astralane, bloXroute, ZeroSlot, and Nozomi. 7 concurrent submitters for maximum landing rate.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🔮</div>
+      <h3>On-Chain Programs</h3>
+      <p>Custom Solana programs for atomic swaps, flash loan arbitrage, and cross-DEX routing. Audited and battle-tested in production.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">📡</div>
+      <h3>Data Infrastructure</h3>
+      <p>Real-time shred decoding, Geyser gRPC streaming, and graph-based opportunity detection across Raydium, Orca, Meteora, and PumpSwap.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🛡️</div>
+      <h3>Risk Management</h3>
+      <p>Position tracking, circuit breakers, automated sell-off, and real-time PnL monitoring with InfluxDB and Grafana dashboards.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">💎</div>
+      <h3>Flash Loans</h3>
+      <p>Zero-capital arbitrage through Marginfi flash loans. Execute profitable trades without deploying your own capital.</p>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section>
+  <h2 class="section-title">By The Numbers</h2>
+  <div class="divider"></div>
+  <div class="metrics-grid">
+    <div class="metric">
+      <div class="metric-value" data-target="80">0</div>
+      <div class="metric-label">Thousand Lines of Rust</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" data-target="7">0</div>
+      <div class="metric-label">TX Submitters</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" data-target="8">0</div>
+      <div class="metric-label">DEX Integrations</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" data-target="15" data-suffix="ms">0</div>
+      <div class="metric-label">Execution Latency</div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section>
+  <h2 class="section-title">Stack</h2>
+  <div class="divider"></div>
+  <div class="tech-list">
+    <span class="tech-tag">Rust</span>
+    <span class="tech-tag">Solana</span>
+    <span class="tech-tag">Anchor</span>
+    <span class="tech-tag">Tokio</span>
+    <span class="tech-tag">gRPC</span>
+    <span class="tech-tag">QUIC</span>
+    <span class="tech-tag">Jito</span>
+    <span class="tech-tag">Helius</span>
+    <span class="tech-tag">Yellowstone</span>
+    <span class="tech-tag">InfluxDB</span>
+    <span class="tech-tag">Grafana</span>
+    <span class="tech-tag">Docker</span>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section>
+  <h2 class="section-title">Contact</h2>
+  <div class="divider"></div>
+  <div class="contact-links">
+    <a href="https://t.me/AV_0011" class="contact-link" target="_blank">TELEGRAM</a>
+    <a href="https://github.com/solana-storm" class="contact-link" target="_blank">GITHUB</a>
+  </div>
+</section>
+
+<footer>
+  © 2026 MERIDIAN — All rights reserved
+</footer>
+
+<script>
+// ═══ ANIMATED DEEP SPACE ═══
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let nebulae = [];
+let galaxyAngle = 0;
+const STAR_COUNT = 900;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight * 5;
+}
+
+function createStars() {
+  stars = [];
+  for (let i = 0; i < STAR_COUNT; i++) {
+    // Star colors: white, blue-white, orange, pale blue
+    const colors = [
+      [255,255,255], [200,220,255], [255,200,150],
+      [180,200,255], [255,180,180], [150,180,255]
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 1.8 + 0.2,
+      opacity: Math.random() * 0.7 + 0.1,
+      twinkleSpeed: Math.random() * 0.03 + 0.005,
+      twinkleOffset: Math.random() * Math.PI * 2,
+      color: color,
+      // Some stars have glow
+      glow: Math.random() < 0.15,
+    });
+  }
+}
+
+function createNebulae() {
+  nebulae = [
+    // Red/pink nebula (Orion-like) — right side — VIVID
+    { x: 0.75, y: 0.08, rx: 0.22, ry: 0.15, r: 255, g: 50, b: 80, opacity: 0.15, phase: 0 },
+    { x: 0.78, y: 0.09, rx: 0.15, ry: 0.1, r: 255, g: 100, b: 120, opacity: 0.12, phase: 1 },
+    { x: 0.72, y: 0.07, rx: 0.12, ry: 0.12, r: 200, g: 40, b: 80, opacity: 0.1, phase: 2 },
+    { x: 0.8, y: 0.1, rx: 0.08, ry: 0.06, r: 255, g: 150, b: 180, opacity: 0.08, phase: 2.5 },
+    // Blue nebula — left side — VIVID
+    { x: 0.2, y: 0.12, rx: 0.18, ry: 0.12, r: 60, g: 120, b: 255, opacity: 0.13, phase: 3 },
+    { x: 0.25, y: 0.14, rx: 0.12, ry: 0.1, r: 100, g: 160, b: 255, opacity: 0.1, phase: 4 },
+    { x: 0.15, y: 0.1, rx: 0.1, ry: 0.08, r: 80, g: 100, b: 240, opacity: 0.08, phase: 4.5 },
+    // Purple/magenta haze — center — VIVID
+    { x: 0.5, y: 0.06, rx: 0.22, ry: 0.1, r: 160, g: 60, b: 220, opacity: 0.1, phase: 5 },
+    { x: 0.45, y: 0.05, rx: 0.15, ry: 0.08, r: 200, g: 80, b: 255, opacity: 0.07, phase: 5.5 },
+    // Cyan/teal — scattered
+    { x: 0.35, y: 0.2, rx: 0.14, ry: 0.08, r: 40, g: 200, b: 220, opacity: 0.08, phase: 6 },
+    { x: 0.6, y: 0.16, rx: 0.1, ry: 0.12, r: 180, g: 60, b: 160, opacity: 0.08, phase: 7 },
+    // Golden core glow
+    { x: 0.5, y: 0.03, rx: 0.08, ry: 0.04, r: 255, g: 200, b: 100, opacity: 0.06, phase: 8 },
+  ];
+}
+
+function drawNebulae(time) {
+  for (const n of nebulae) {
+    const cx = n.x * canvas.width;
+    const cy = n.y * canvas.height;
+    const rx = n.rx * canvas.width;
+    const ry = n.ry * canvas.height;
+    const pulse = 1 + 0.15 * Math.sin(time * 0.3 + n.phase);
+    const opacity = n.opacity * (0.7 + 0.3 * Math.sin(time * 0.2 + n.phase * 0.7));
+    
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx * pulse);
+    grad.addColorStop(0, `rgba(${n.r},${n.g},${n.b},${opacity * 1.5})`);
+    grad.addColorStop(0.3, `rgba(${n.r},${n.g},${n.b},${opacity})`);
+    grad.addColorStop(0.6, `rgba(${n.r},${n.g},${n.b},${opacity * 0.4})`);
+    grad.addColorStop(1, `rgba(${n.r},${n.g},${n.b},0)`);
+    
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);
+    ctx.translate(-cx, -cy);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rx * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawSpiralGalaxy(cx, cy, size, angle, time) {
+  const arms = 2;
+  const pointsPerArm = 200;
+  
+  // Galaxy core glow
+  const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.15);
+  coreGrad.addColorStop(0, 'rgba(255, 240, 200, 0.45)');
+  coreGrad.addColorStop(0.5, 'rgba(255, 220, 160, 0.15)');
+  coreGrad.addColorStop(1, 'rgba(200, 180, 140, 0)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.15, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Spiral arms
+  for (let arm = 0; arm < arms; arm++) {
+    const armOffset = (arm / arms) * Math.PI * 2;
+    
+    for (let i = 0; i < pointsPerArm; i++) {
+      const t = i / pointsPerArm;
+      const spiralAngle = armOffset + t * Math.PI * 3 + angle;
+      const r = t * size;
+      const spread = (t * size * 0.08) * (1 + Math.sin(i * 0.5 + time) * 0.3);
+      
+      const px = cx + Math.cos(spiralAngle) * r + (Math.random() - 0.5) * spread;
+      const py = cy + Math.sin(spiralAngle) * r * 0.4 + (Math.random() - 0.5) * spread * 0.4;
+      
+      // Color varies along arm
+      let starR, starG, starB;
+      if (t < 0.3) {
+        // Core: warm yellow
+        starR = 255; starG = 230; starB = 180;
+      } else if (t < 0.6) {
+        // Mid: blue-white with pink
+        const mix = (t - 0.3) / 0.3;
+        starR = 200 + mix * 55; starG = 180 + mix * 40; starB = 220;
+      } else {
+        // Outer: blue with some pink knots
+        starR = 150 + Math.random() * 100;
+        starG = 160 + Math.random() * 60;
+        starB = 240;
+      }
+      
+      const opacity = (1 - t * 0.5) * 0.7;
+      const dotSize = (1 - t * 0.3) * 1.8;
+      
+      ctx.beginPath();
+      ctx.arc(px, py, dotSize, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${starR},${starG},${starB},${opacity})`;
+      ctx.fill();
+    }
+  }
+  
+  // Outer halo
+  const haloGrad = ctx.createRadialGradient(cx, cy, size * 0.3, cx, cy, size);
+  haloGrad.addColorStop(0, 'rgba(100, 120, 180, 0.06)');
+  haloGrad.addColorStop(1, 'rgba(60, 80, 140, 0)');
+  ctx.fillStyle = haloGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawFrame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const time = Date.now() * 0.001;
+  galaxyAngle += 0.0003;
+  
+  // 1. Nebulae (background glow)
+  drawNebulae(time);
+  
+  // 2. Spiral galaxy (upper left area)
+  drawSpiralGalaxy(
+    canvas.width * 0.32,
+    canvas.height * 0.06,
+    Math.min(canvas.width, canvas.height) * 0.18,
+    galaxyAngle,
+    time
+  );
+  
+  // 3. Small distant galaxy
+  drawSpiralGalaxy(
+    canvas.width * 0.65,
+    canvas.height * 0.04,
+    Math.min(canvas.width, canvas.height) * 0.05,
+    -galaxyAngle * 0.7,
+    time
+  );
+  
+  // 4. Stars
+  for (const star of stars) {
+    const twinkle = 0.5 + 0.5 * Math.sin(time * star.twinkleSpeed * 10 + star.twinkleOffset);
+    const opacity = star.opacity * twinkle;
+    const [r, g, b] = star.color;
+    
+    // Glow for bright stars
+    if (star.glow) {
+      const glowGrad = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 6);
+      glowGrad.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.3})`);
+      glowGrad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size * 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},${opacity})`;
+    ctx.fill();
+  }
+  
+  // 5. Shooting stars
+  if (Math.random() < 0.003) {
+    const sx = Math.random() * canvas.width;
+    const sy = Math.random() * canvas.height * 0.4;
+    const angle = Math.PI * 0.15 + Math.random() * 0.3;
+    const len = 100 + Math.random() * 150;
+    const grad = ctx.createLinearGradient(sx, sy, sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+    grad.addColorStop(0, 'rgba(255,255,255,0.7)');
+    grad.addColorStop(0.3, 'rgba(200,220,255,0.3)');
+    grad.addColorStop(1, 'rgba(200,220,255,0)');
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(drawFrame);
+}
+
+resize();
+createStars();
+createNebulae();
+drawFrame();
+window.addEventListener('resize', () => { resize(); createStars(); createNebulae(); });
+
+// ═══ SCROLL ANIMATIONS ═══
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.section-title, .divider, .service-card, .metric, .tech-tag').forEach(el => {
+  observer.observe(el);
+});
+
+// ═══ COUNTER ANIMATION ═══
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let current = 0;
+      const step = target / 60;
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        el.textContent = Math.round(current) + (suffix ? suffix : current >= 1000 ? 'K' : '');
+      }, 16);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.metric-value').forEach(el => {
+  counterObserver.observe(el);
+});
+
+// ═══ PARALLAX MOON ═══
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const moon = document.querySelector('.moon-container');
+  if (moon) {
+    moon.style.transform = `translateY(${scrollY * 0.3}px)`;
+    moon.style.opacity = Math.max(0, 1 - scrollY / 600);
+  }
+});
+</script>
+
+</body>
+</html>

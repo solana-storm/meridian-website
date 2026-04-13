@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Loan Arbitrage on Solana: Zero-Capital MEV with Marginfi | Meridian</title>
+<meta name="description" content="Deep dive into flash loan arbitrage on Solana using Marginfi. Zero-capital MEV extraction, atomic execution patterns, profitability economics, and implementation guide for flash loan-powered cross-DEX arbitrage.">
+<meta name="keywords" content="flash loan arbitrage Solana, Marginfi flash loan, zero capital arbitrage, flash loan MEV, Solana flash loans, flash loan tutorial, DeFi flash loans, atomic arbitrage flash loan">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://meridian-mev.com/blog/flash-loan-arbitrage-solana">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flash Loan Arbitrage on Solana: Zero-Capital MEV with Marginfi">
+<meta property="og:description" content="Zero-capital MEV extraction using Marginfi flash loans. Atomic execution, economics, and implementation guide.">
+<meta property="og:url" content="https://meridian-mev.com/blog/flash-loan-arbitrage-solana">
+<meta property="og:site_name" content="Meridian">
+<meta property="article:published_time" content="2026-04-02">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Flash Loan Arbitrage on Solana with Marginfi">
+<meta name="twitter:description" content="Zero-capital MEV extraction using Marginfi flash loans on Solana.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Flash Loan Arbitrage on Solana: Zero-Capital MEV with Marginfi",
+  "description": "Deep dive into flash loan arbitrage on Solana using Marginfi. Zero-capital MEV extraction with atomic execution patterns and profitability economics.",
+  "datePublished": "2026-04-02",
+  "dateModified": "2026-04-13",
+  "author": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "mainEntityOfPage": "https://meridian-mev.com/blog/flash-loan-arbitrage-solana",
+  "keywords": ["flash loan", "arbitrage", "Solana", "Marginfi", "zero capital", "MEV"]
+}
+</script>
+
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">MERIDIAN</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/services/mev-bot-development">Services</a></li>
+    <li><a href="/blog/" class="active">Blog</a></li>
+    <li><a href="https://t.me/AV_0011" target="_blank">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/blog/">Blog</a><span class="sep">/</span>
+    Flash Loan Arbitrage
+  </div>
+  <h1 class="page-title">Flash Loan Arbitrage on Solana</h1>
+  <p class="page-subtitle">Zero-capital MEV extraction using Marginfi flash loans. Borrow, arbitrage, repay — all in a single atomic transaction.</p>
+</header>
+
+<main class="content">
+  <div class="article-meta">
+    <span>April 2, 2026</span>
+    <span>8 min read</span>
+    <span>Technical Guide</span>
+  </div>
+
+  <p>Flash loans are the great equalizer in MEV. They let you execute arbitrage without deploying any capital — borrow millions in SOL, execute a profitable trade, repay the loan, and keep the profit, all within a single Solana transaction. If the trade isn't profitable, the transaction reverts and you lose nothing but the transaction fee.</p>
+
+  <p>On Solana, <strong>Marginfi</strong> is the primary flash loan provider. This article covers how flash loans work, how to integrate them into arbitrage bots, and the economics that make this profitable.</p>
+
+  <h2>How Flash Loans Work on Solana</h2>
+  <p>A flash loan on Solana follows the borrow-use-repay pattern within a single transaction:</p>
+  <ol>
+    <li><strong>Borrow:</strong> Your transaction calls the Marginfi flash loan instruction, borrowing tokens from the lending pool</li>
+    <li><strong>Use:</strong> Intermediate instructions in the same transaction use the borrowed tokens (swaps, arbitrage, liquidations)</li>
+    <li><strong>Repay:</strong> Before the transaction ends, you repay the borrowed amount plus a fee</li>
+    <li><strong>Verify:</strong> The Marginfi program verifies the repayment in a final instruction</li>
+  </ol>
+  <p>If the repayment instruction fails or is missing, the <strong>entire transaction reverts</strong> — including the borrow. This atomicity is what makes flash loans risk-free for the lender and capital-free for the borrower.</p>
+
+  <h3>Marginfi Flash Loan Mechanics</h3>
+  <p>Marginfi's flash loan system works through its existing lending pool infrastructure. The available flash loan liquidity equals the idle liquidity in each lending pool. Key parameters:</p>
+  <ul>
+    <li><strong>Flash loan fee:</strong> Typically 0.01-0.05% of borrowed amount (varies by token and market conditions)</li>
+    <li><strong>Available liquidity:</strong> Depends on pool utilization. SOL and USDC pools usually have the deepest liquidity</li>
+    <li><strong>Transaction scope:</strong> Borrow and repay must occur within the same transaction</li>
+    <li><strong>No collateral required:</strong> The atomic repayment guarantee eliminates collateral risk</li>
+  </ul>
+
+  <h2>Flash Loan Arbitrage Architecture</h2>
+  <p>A typical flash loan arbitrage transaction has this instruction sequence:</p>
+
+  <pre><code>Transaction Instructions:
+1. Marginfi: flash_loan_begin(borrow 1000 SOL)
+2. DEX A:    swap(1000 SOL → USDC)         // Buy USDC where it's cheap
+3. DEX B:    swap(USDC → SOL)              // Sell USDC where it's expensive
+4. Marginfi: flash_loan_end(repay 1000 SOL + fee)
+5. Program:  verify_profit(min_profit = X)  // Revert if not profitable</code></pre>
+
+  <p>The custom verify program (instruction 5) is critical — it checks that after all swaps and loan repayment, your token account has more than it started with. If the profit is below your minimum threshold, the entire transaction reverts.</p>
+
+  <h2>Implementation Guide</h2>
+
+  <h3>Step 1: Set Up Marginfi Account</h3>
+  <p>Before using flash loans, you need a Marginfi user account. This is a one-time setup:</p>
+  <pre><code>// Create Marginfi account (one-time)
+let create_account_ix = marginfi::instruction::create_account(
+    &marginfi_program_id,
+    &marginfi_group,
+    &payer.pubkey(),
+)?;</code></pre>
+
+  <h3>Step 2: Build the Flash Loan Transaction</h3>
+  <p>The transaction combines Marginfi flash loan instructions with your arbitrage swaps:</p>
+  <pre><code>fn build_flash_loan_arb_tx(
+    borrow_amount: u64,
+    borrow_mint: &Pubkey,
+    swap_a_ix: Instruction,    // Buy on cheap DEX
+    swap_b_ix: Instruction,    // Sell on expensive DEX
+    marginfi_group: &Pubkey,
+    marginfi_account: &Pubkey,
+    payer: &Keypair,
+) -> Result&lt;Transaction&gt; {
+    let flash_loan_begin = marginfi::instruction::flash_loan_begin(
+        marginfi_group,
+        marginfi_account,
+        borrow_mint,
+        borrow_amount,
+    )?;
+
+    let flash_loan_end = marginfi::instruction::flash_loan_end(
+        marginfi_group,
+        marginfi_account,
+        borrow_mint,
+        borrow_amount,  // Repay amount (fee added by program)
+    )?;
+
+    let verify_profit_ix = build_verify_profit_instruction(
+        &payer.pubkey(),
+        borrow_mint,
+        MIN_PROFIT_LAMPORTS,
+    )?;
+
+    let instructions = vec![
+        ComputeBudgetInstruction::set_compute_unit_limit(400_000),
+        ComputeBudgetInstruction::set_compute_unit_price(priority_fee),
+        flash_loan_begin,
+        swap_a_ix,
+        swap_b_ix,
+        flash_loan_end,
+        verify_profit_ix,
+    ];
+
+    Ok(Transaction::new_signed_with_payer(
+        &instructions,
+        Some(&payer.pubkey()),
+        &[payer],
+        recent_blockhash,
+    ))
+}</code></pre>
+
+  <h3>Step 3: Optimal Borrow Amount</h3>
+  <p>The profit from an arbitrage is not linear with size. Larger trades have more slippage, reducing the effective price difference. The optimal borrow amount maximizes <code>profit - flash_loan_fee - tx_fees - jito_tip</code>.</p>
+  <p>Find the optimum using binary search:</p>
+  <pre><code>fn find_optimal_borrow(
+    pool_a: &PoolState,
+    pool_b: &PoolState,
+    flash_loan_fee_bps: u64,
+) -> u64 {
+    let mut lo = MIN_BORROW;
+    let mut hi = MAX_BORROW;  // Limited by pool liquidity
+
+    while hi - lo > PRECISION {
+        let mid = (lo + hi) / 2;
+        let profit_mid = simulate_arb_profit(pool_a, pool_b, mid);
+        let profit_next = simulate_arb_profit(pool_a, pool_b, mid + STEP);
+
+        if profit_next > profit_mid {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+
+    (lo + hi) / 2
+}</code></pre>
+
+  <h2>Economics of Flash Loan Arbitrage</h2>
+  <p>Understanding the cost structure is critical for profitability:</p>
+
+  <h3>Cost Breakdown</h3>
+  <ul>
+    <li><strong>Flash loan fee:</strong> 0.01-0.05% of borrowed amount. On a 1000 SOL borrow at 0.03%, that's 0.3 SOL (~$45 at $150/SOL)</li>
+    <li><strong>Jito tip:</strong> Varies by competition. Typically 0.001-0.05 SOL for mid-tier opportunities</li>
+    <li><strong>Priority fee:</strong> Based on CU consumption. A 400K CU transaction at 100K microlamports/CU = 0.04 SOL</li>
+    <li><strong>Base transaction fee:</strong> 0.000005 SOL — negligible</li>
+    <li><strong>Swap fees:</strong> DEX trading fees (0.01-0.3% per swap depending on pool)</li>
+  </ul>
+
+  <h3>Profitability Threshold</h3>
+  <p>For a flash loan arb to be profitable, the price discrepancy must cover all costs:</p>
+  <pre><code>Required spread > flash_loan_fee + swap_fee_a + swap_fee_b + jito_tip + priority_fee
+
+Example:
+  Flash loan fee (0.03%):     0.300 SOL
+  Swap fee DEX A (0.25%):     2.500 SOL
+  Swap fee DEX B (0.01%):     0.100 SOL
+  Jito tip:                   0.010 SOL
+  Priority fee:               0.040 SOL
+  ────────────────────────────────────
+  Total cost:                 2.950 SOL
+
+  With 1000 SOL position, need &gt;0.295% price spread to break even</code></pre>
+
+  <h3>Why Flash Loans Still Win</h3>
+  <p>Despite the additional flash loan fee, flash loans are often more profitable than self-funded arbitrage because:</p>
+  <ul>
+    <li><strong>Unlimited position sizing:</strong> Take maximum size on every opportunity instead of being limited by your balance</li>
+    <li><strong>No capital risk:</strong> Your funds sit safely in your wallet. A bug in your strategy can't drain your capital because the flash loan reverts.</li>
+    <li><strong>No rebalancing:</strong> Self-funded arbs accumulate inventory in various tokens. Flash loans always start and end in the same token.</li>
+    <li><strong>Capital efficiency:</strong> Your capital can be deployed elsewhere (staking, lending) while flash loans handle arbitrage</li>
+  </ul>
+
+  <h2>Multi-Hop Flash Loan Arbitrage</h2>
+  <p>Flash loans shine in multi-hop scenarios where the required capital for self-funding would be prohibitive:</p>
+
+  <pre><code>Transaction Instructions:
+1. Marginfi:   flash_loan_begin(borrow 5000 USDC)
+2. Orca:       swap(5000 USDC → SOL)
+3. Raydium:    swap(SOL → BONK)
+4. PumpSwap:   swap(BONK → USDC)
+5. Marginfi:   flash_loan_end(repay 5000 USDC + fee)
+6. Program:    verify(USDC_balance > initial + min_profit)</code></pre>
+
+  <p>This 3-hop path through SOL and BONK exploits price discrepancies across three different DEXes. Without flash loans, you'd need $750K+ in USDC to make this trade at scale.</p>
+
+  <h2>Flash Loan Limitations</h2>
+  <p>Flash loans are powerful but not unlimited:</p>
+  <ul>
+    <li><strong>Liquidity constraints:</strong> You can only borrow what's available in the lending pool. During high-utilization periods, available flash loan liquidity decreases.</li>
+    <li><strong>CU budget:</strong> Complex multi-hop flash loan arbs consume significant compute units. Solana's 1.4M CU limit per transaction can be restrictive for 4+ hop paths.</li>
+    <li><strong>Supported tokens:</strong> Marginfi only offers flash loans for tokens that have active lending pools (SOL, USDC, USDT, and select others).</li>
+    <li><strong>Atomicity requirement:</strong> Everything must happen in one transaction. You can't split a flash loan strategy across multiple transactions.</li>
+  </ul>
+
+  <h2>Alternatives to Marginfi</h2>
+  <p>While Marginfi is the primary flash loan provider on Solana, alternatives exist:</p>
+  <ul>
+    <li><strong>Kamino:</strong> Offers flash loan functionality through its lending pools with competitive fees</li>
+    <li><strong>Solend:</strong> Original Solana lending protocol with flash loan support</li>
+    <li><strong>Custom pools:</strong> Some teams build their own flash loan pools for exclusive access and lower fees</li>
+  </ul>
+  <p>In production, it's best to support multiple flash loan providers and select based on available liquidity and fee at execution time.</p>
+
+  <h2>Putting It Together</h2>
+  <p>Flash loan arbitrage is the most capital-efficient MEV strategy on Solana. Combined with a fast data pipeline, smart routing engine, and multicast submission, it enables profitable extraction without significant capital deployment. The barrier to entry is technical — you need excellent Rust skills, deep protocol knowledge, and robust infrastructure — but the capital barrier is near zero.</p>
+
+  <p>For more on the overall MEV bot architecture, see our <a href="/blog/how-to-build-mev-bot-solana" style="color: rgba(255,200,150,0.7);">complete guide to building MEV bots on Solana</a>.</p>
+
+  <div class="cta-section">
+    <h3>Build Flash Loan Strategies</h3>
+    <p>We integrate flash loans into new and existing MEV systems. Zero-capital arbitrage, optimized for your target pairs.</p>
+    <a href="https://t.me/AV_0011" class="cta-btn" target="_blank">Discuss Your Strategy</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/services/mev-bot-development">Services</a>
+    <a href="https://github.com/solana-storm" target="_blank">GitHub</a>
+    <a href="https://t.me/AV_0011" target="_blank">Telegram</a>
+  </div>
+  <div class="footer-copy">© 2026 MERIDIAN — All rights reserved</div>
+</footer>
+
+</body>
+</html>

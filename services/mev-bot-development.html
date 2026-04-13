@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom MEV Bot Development on Solana | Meridian</title>
+<meta name="description" content="Production-grade MEV bot development on Solana. Sub-15ms execution, 7 concurrent TX submitters, atomic arbitrage, flash loan strategies. Built in Rust for maximum performance.">
+<meta name="keywords" content="MEV bot development, Solana MEV bot, custom trading bot, arbitrage bot Solana, MEV extraction, HFT bot, Rust trading bot, Solana bot developer">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://meridian-mev.com/services/mev-bot-development">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Custom MEV Bot Development on Solana — Meridian">
+<meta property="og:description" content="Production-grade MEV bot development. Sub-15ms execution, 7 TX submitters, atomic arbitrage, flash loans. Enterprise Rust infrastructure.">
+<meta property="og:url" content="https://meridian-mev.com/services/mev-bot-development">
+<meta property="og:site_name" content="Meridian">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Custom MEV Bot Development on Solana — Meridian">
+<meta name="twitter:description" content="Production-grade MEV bot development. Sub-15ms execution, 7 TX submitters, atomic arbitrage.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Custom MEV Bot Development on Solana",
+  "description": "End-to-end development of production-grade MEV bots on Solana. Atomic arbitrage, flash loan strategies, multi-DEX routing, and high-frequency trading infrastructure built in Rust.",
+  "provider": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "serviceType": "Software Development",
+  "areaServed": "Worldwide",
+  "url": "https://meridian-mev.com/services/mev-bot-development"
+}
+</script>
+
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">MERIDIAN</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/services/mev-bot-development" class="active">Services</a></li>
+    <li><a href="/blog/">Blog</a></li>
+    <li><a href="https://t.me/AV_0011" target="_blank">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/services/mev-bot-development">Services</a><span class="sep">/</span>
+    MEV Bot Development
+  </div>
+  <h1 class="page-title">Custom MEV Bot Development</h1>
+  <p class="page-subtitle">Production-grade extraction infrastructure built in Rust. From opportunity detection to transaction landing — every millisecond counts.</p>
+</header>
+
+<main class="content">
+  <h2>Why Custom Over Off-the-Shelf</h2>
+  <p>Generic MEV bots compete on identical strategies with identical code. The edge goes to custom-built systems that exploit protocol-specific inefficiencies, use optimized on-chain programs, and leverage infrastructure advantages that commodity solutions cannot match.</p>
+  <p>Every bot we build is purpose-engineered for its target market: specific token pairs, specific DEXes, specific execution windows. This specialization is what separates profitable operations from noise.</p>
+
+  <h2>What We Deliver</h2>
+  <ul class="feature-list">
+    <li>
+      <span class="icon">⚡</span>
+      <div>
+        <strong>Sub-15ms Detection-to-Execution Pipeline</strong><br>
+        Shred-level transaction monitoring via Geyser gRPC. Opportunity detection runs in-process with zero serialization overhead. Transactions are pre-constructed and signed asynchronously.
+      </div>
+    </li>
+    <li>
+      <span class="icon">🌐</span>
+      <div>
+        <strong>7 Concurrent TX Submitters</strong><br>
+        Jito bundles, Helius staked connections, bloXroute BDN, Astralane, ZeroSlot, Nozomi, and direct QUIC — all firing simultaneously. Landing rate is everything.
+      </div>
+    </li>
+    <li>
+      <span class="icon">🔮</span>
+      <div>
+        <strong>Atomic On-Chain Programs</strong><br>
+        Custom Solana programs (Anchor or native) that execute multi-step strategies in a single transaction. Swap → check → revert pattern ensures zero loss on failed trades.
+      </div>
+    </li>
+    <li>
+      <span class="icon">📊</span>
+      <div>
+        <strong>Real-time Monitoring & Dashboards</strong><br>
+        InfluxDB metrics, Grafana dashboards, Telegram alerts. Track PnL, execution latency, landing rate, and strategy performance in real time.
+      </div>
+    </li>
+    <li>
+      <span class="icon">🛡️</span>
+      <div>
+        <strong>Risk Management & Circuit Breakers</strong><br>
+        Automated position limits, drawdown thresholds, and kill switches. The system protects capital before you even notice a problem.
+      </div>
+    </li>
+    <li>
+      <span class="icon">🔧</span>
+      <div>
+        <strong>Multi-DEX Routing Engine</strong><br>
+        Graph-based pathfinding across Raydium (AMM + CLMM + CPMM), Orca Whirlpools, Meteora DLMM, PumpSwap, and Lifinity. Discovers arbitrage paths that single-DEX scanners miss.
+      </div>
+    </li>
+  </ul>
+
+  <h2>Architecture Overview</h2>
+  <p>Every bot follows a proven three-layer architecture:</p>
+  <ol>
+    <li><strong>Data Layer</strong> — Geyser gRPC streams, Yellowstone subscriptions, and direct RPC polling. Account updates are decoded in-memory using zero-copy deserialization.</li>
+    <li><strong>Strategy Layer</strong> — Modular strategy engine with hot-reload configuration. Each strategy runs as an independent async task with its own metrics and circuit breakers.</li>
+    <li><strong>Execution Layer</strong> — Transaction construction, simulation (via Helius or local validator), signing, and multicast submission through all 7 submitters simultaneously.</li>
+  </ol>
+
+  <h2>Technology Stack</h2>
+  <p>Our bots are written exclusively in <strong>Rust</strong> — not TypeScript, not Python. Rust gives us:</p>
+  <ul>
+    <li>Zero-cost abstractions with no garbage collection pauses</li>
+    <li>Tokio async runtime for concurrent I/O without threads overhead</li>
+    <li>Direct integration with Solana SDK and Anchor framework</li>
+    <li>Memory safety guarantees critical for financial software</li>
+    <li>Sub-microsecond computation for price calculations and path finding</li>
+  </ul>
+
+  <h2>Engagement Models</h2>
+  <h3>Full Build</h3>
+  <p>End-to-end bot development from architecture to production deployment. Includes strategy research, on-chain program development, infrastructure setup, and 30 days of post-launch support.</p>
+
+  <h3>Strategy Module</h3>
+  <p>Add new strategies to your existing infrastructure. We develop and integrate the detection logic, execution path, and monitoring for a specific MEV opportunity.</p>
+
+  <h3>Infrastructure Upgrade</h3>
+  <p>Upgrade your existing bot's execution layer — add new submitters, improve latency, integrate additional DEXes, or migrate from TypeScript/Python to Rust.</p>
+
+  <div class="cta-section">
+    <h3>Ready to Build?</h3>
+    <p>Every project starts with a technical assessment. Share your requirements and we'll outline the architecture.</p>
+    <a href="https://t.me/AV_0011" class="cta-btn" target="_blank">Get in Touch</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://github.com/solana-storm" target="_blank">GitHub</a>
+    <a href="https://t.me/AV_0011" target="_blank">Telegram</a>
+  </div>
+  <div class="footer-copy">© 2026 MERIDIAN — All rights reserved</div>
+</footer>
+
+</body>
+</html>

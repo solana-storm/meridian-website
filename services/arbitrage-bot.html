@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atomic Arbitrage Bot — Cross-DEX Solana Arbitrage | Meridian</title>
+<meta name="description" content="Cross-DEX atomic arbitrage bot on Solana. Graph-based path discovery across Raydium, Orca, Meteora, PumpSwap. Zero-risk atomic execution with flash loans and custom on-chain programs.">
+<meta name="keywords" content="arbitrage bot Solana, cross-DEX arbitrage, atomic arbitrage, Raydium arbitrage, Orca Whirlpools, Meteora DLMM, PumpSwap, flash loan arbitrage, DEX arbitrage bot">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://meridian-mev.com/services/arbitrage-bot">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Atomic Arbitrage Bot — Cross-DEX Solana | Meridian">
+<meta property="og:description" content="Cross-DEX atomic arbitrage on Solana. Graph-based path discovery, zero-risk execution, flash loans. Raydium, Orca, Meteora, PumpSwap.">
+<meta property="og:url" content="https://meridian-mev.com/services/arbitrage-bot">
+<meta property="og:site_name" content="Meridian">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Atomic Arbitrage Bot — Cross-DEX Solana | Meridian">
+<meta name="twitter:description" content="Cross-DEX atomic arbitrage on Solana with graph-based path discovery and flash loans.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Atomic Arbitrage Bot — Cross-DEX Solana",
+  "description": "Cross-DEX atomic arbitrage bot on Solana with graph-based path discovery across Raydium, Orca, Meteora, and PumpSwap. Zero-risk execution using flash loans and custom on-chain programs.",
+  "provider": {
+    "@type": "Organization",
+    "name": "Meridian",
+    "url": "https://meridian-mev.com"
+  },
+  "serviceType": "Software Development",
+  "areaServed": "Worldwide",
+  "url": "https://meridian-mev.com/services/arbitrage-bot"
+}
+</script>
+
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">MERIDIAN</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/services/mev-bot-development" class="active">Services</a></li>
+    <li><a href="/blog/">Blog</a></li>
+    <li><a href="https://t.me/AV_0011" target="_blank">Contact</a></li>
+  </ul>
+  <div class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <a href="/services/mev-bot-development">Services</a><span class="sep">/</span>
+    Arbitrage Bot
+  </div>
+  <h1 class="page-title">Atomic Arbitrage Bot</h1>
+  <p class="page-subtitle">Cross-DEX price discrepancy exploitation with zero-risk atomic execution. Graph-based path discovery across every major Solana DEX.</p>
+</header>
+
+<main class="content">
+  <h2>How Cross-DEX Arbitrage Works on Solana</h2>
+  <p>Price discrepancies between DEXes are constant and fleeting. When SOL/USDC trades at $148.50 on Raydium and $148.72 on Orca Whirlpools, the $0.22 spread exists for milliseconds. Our bot detects these gaps, constructs an atomic transaction that buys low and sells high, and lands it before the opportunity closes.</p>
+  <p>The key word is <strong>atomic</strong>: the entire multi-swap sequence executes in a single Solana transaction. If any step fails — price moved, insufficient liquidity, simulation mismatch — the entire transaction reverts. You never lose capital on a failed arb.</p>
+
+  <h2>Supported DEX Protocols</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>Raydium</h3>
+      <p>AMM V4, Concentrated Liquidity (CLMM), and CPMM pools. Full support for all three pool types with optimized route calculation.</p>
+    </div>
+    <div class="card">
+      <h3>Orca Whirlpools</h3>
+      <p>Concentrated liquidity pools with tick-based pricing. Efficient tick traversal for accurate quote computation.</p>
+    </div>
+    <div class="card">
+      <h3>Meteora DLMM</h3>
+      <p>Dynamic Liquidity Market Maker with bin-based pricing. Supports volatile and stable pair configurations.</p>
+    </div>
+    <div class="card">
+      <h3>PumpSwap</h3>
+      <p>Bonding curve AMM pools from the Pump ecosystem. High-volume memecoin pairs with significant arbitrage potential.</p>
+    </div>
+    <div class="card">
+      <h3>Lifinity</h3>
+      <p>Proactive market maker with oracle-based pricing. Unique pricing model creates persistent arbitrage against reactive AMMs.</p>
+    </div>
+    <div class="card">
+      <h3>Phoenix</h3>
+      <p>On-chain order book with limit orders. Order book vs AMM price gaps are a consistent arbitrage source.</p>
+    </div>
+  </div>
+
+  <h2>Graph-Based Path Discovery</h2>
+  <p>Our routing engine models the entire Solana DEX landscape as a weighted directed graph. Each pool is an edge, each token is a node. The engine continuously updates edge weights as prices change and runs modified Bellman-Ford to detect negative cycles — which represent profitable arbitrage paths.</p>
+  <p>This approach discovers complex multi-hop opportunities that simple pair-scanning misses:</p>
+  <ul>
+    <li><strong>2-hop:</strong> SOL → USDC (Raydium) → SOL (Orca) — classic triangular arb</li>
+    <li><strong>3-hop:</strong> SOL → BONK → USDC → SOL — cross-token triangular</li>
+    <li><strong>Multi-hop:</strong> Paths involving 4+ swaps through lesser-monitored pairs where competition is lower</li>
+  </ul>
+
+  <h2>Flash Loan Integration</h2>
+  <p>For capital-efficient execution, our bots integrate with <strong>Marginfi flash loans</strong>. Instead of deploying your own SOL or USDC as working capital, the bot borrows within the same transaction, executes the arbitrage, repays the loan plus fee, and keeps the profit.</p>
+  <p>This means:</p>
+  <ul>
+    <li>Zero capital at risk (beyond transaction fees and Jito tips)</li>
+    <li>Scale limited only by flash loan pool depth, not your balance</li>
+    <li>No inventory management or rebalancing needed</li>
+  </ul>
+
+  <h2>Execution Pipeline</h2>
+  <ol>
+    <li><strong>Account Monitoring</strong> — Geyser gRPC streams all pool account updates. Price changes are decoded in-memory with zero-copy deserialization.</li>
+    <li><strong>Opportunity Detection</strong> — Updated prices feed into the graph engine. Profitable cycles trigger immediately.</li>
+    <li><strong>Transaction Construction</strong> — The optimal swap sequence is compiled into a single transaction with CU budget optimization and priority fee calculation.</li>
+    <li><strong>Simulation</strong> — Fast simulation via Helius or local validator to verify profitability after fees and slippage.</li>
+    <li><strong>Multicast Submission</strong> — Transaction fires through all 7 submitters: Jito bundles, Helius, bloXroute, Astralane, ZeroSlot, Nozomi, direct QUIC.</li>
+    <li><strong>Result Tracking</strong> — Landed transactions are confirmed and PnL is recorded to InfluxDB within seconds.</li>
+  </ol>
+
+  <h2>Performance Characteristics</h2>
+  <ul>
+    <li>Detection latency: &lt;5ms from account update to opportunity signal</li>
+    <li>Transaction construction: &lt;2ms including CU optimization</li>
+    <li>End-to-end pipeline: &lt;15ms from price change to transaction submission</li>
+    <li>Landing rate: 30-60% depending on competition density and tip strategy</li>
+    <li>Average daily opportunities scanned: 50,000+ across all monitored pairs</li>
+  </ul>
+
+  <div class="cta-section">
+    <h3>Deploy Your Arb Bot</h3>
+    <p>Discuss your target pairs, capital allocation, and expected ROI. We'll design the optimal architecture.</p>
+    <a href="https://t.me/AV_0011" class="cta-btn" target="_blank">Start a Conversation</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://github.com/solana-storm" target="_blank">GitHub</a>
+    <a href="https://t.me/AV_0011" target="_blank">Telegram</a>
+  </div>
+  <div class="footer-copy">© 2026 MERIDIAN — All rights reserved</div>
+</footer>
+
+</body>
+</html>
