@@ -98,7 +98,7 @@ body {
   border-radius: 1px;
   opacity: 0;
   transform: rotate(145deg);
-  animation: shoot 1s ease-out infinite;
+  animation: shoot 1s ease-out forwards;
   box-shadow: 0 0 6px rgba(200, 215, 255, 0.4);
 }
 

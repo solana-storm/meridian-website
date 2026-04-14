@@ -39,15 +39,42 @@ function Stars() {
     })),
   ]).current;
 
-  // Shooting stars
-  const shootingStars = useRef(
-    Array.from({ length: 4 }, (_, i) => ({
-      delay: i * 6 + Math.random() * 4,
-      duration: Math.random() * 1.2 + 0.6,
-      top: Math.random() * 90 + 5,
-      left: Math.random() * 90 + 5,
-    }))
-  ).current;
+  // Shooting stars — spawn dynamically, fall once, disappear
+  const [shootingStars, setShootingStars] = useState([]);
+  const nextId = useRef(0);
+
+  useEffect(() => {
+    const spawnStar = () => {
+      const id = nextId.current++;
+      const duration = Math.random() * 1.2 + 0.6;
+      setShootingStars((prev) => [
+        ...prev,
+        {
+          id,
+          top: Math.random() * 50 + 5,
+          left: Math.random() * 90 + 5,
+          duration,
+        },
+      ]);
+      // Remove after animation completes
+      setTimeout(() => {
+        setShootingStars((prev) => prev.filter((s) => s.id !== id));
+      }, duration * 1000);
+    };
+
+    // Spawn one soon after mount
+    const initialTimeout = setTimeout(spawnStar, Math.random() * 2000 + 500);
+
+    // Then spawn at random intervals (every 3–8 seconds)
+    const interval = setInterval(() => {
+      spawnStar();
+    }, Math.random() * 5000 + 3000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, []);
 
   const allStars = layers.flat();
 
@@ -67,14 +94,13 @@ function Stars() {
           }}
         />
       ))}
-      {shootingStars.map((s, i) => (
+      {shootingStars.map((s) => (
         <div
-          key={`shoot-${i}`}
+          key={s.id}
           className="shooting-star"
           style={{
             top: `${s.top}%`,
             left: `${s.left}%`,
-            animationDelay: `${s.delay}s`,
             animationDuration: `${s.duration}s`,
           }}
         />
