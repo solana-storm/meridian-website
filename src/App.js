@@ -63,12 +63,11 @@ function Stars() {
     };
 
     // Spawn one soon after mount
-    const initialTimeout = setTimeout(spawnStar, Math.random() * 2000 + 500);
+    const initialTimeout = setTimeout(spawnStar, Math.random() * 300 + 100);
 
-    // Then spawn at random intervals (every 3–8 seconds)
     const interval = setInterval(() => {
       spawnStar();
-    }, Math.random() * 5000 + 3000);
+    }, Math.random() * 1000 + 1000);
 
     return () => {
       clearTimeout(initialTimeout);
