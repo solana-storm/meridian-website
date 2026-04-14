@@ -44,8 +44,8 @@ function Stars() {
     Array.from({ length: 4 }, (_, i) => ({
       delay: i * 6 + Math.random() * 4,
       duration: Math.random() * 1.2 + 0.6,
-      top: Math.random() * 50 + 5,
-      left: Math.random() * 40 + 10,
+      top: Math.random() * 90 + 5,
+      left: Math.random() * 90 + 5,
     }))
   ).current;
 
