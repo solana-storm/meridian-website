@@ -467,7 +467,7 @@ function App() {
                 <span>Discord</span>
               </a>
               <a
-                href="https://t.me/AV_0011"
+                href="https://t.me/mrdnone"
                 className="social-link"
                 target="_blank"
                 rel="noopener noreferrer"
